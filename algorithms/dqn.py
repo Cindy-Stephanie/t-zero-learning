@@ -123,7 +123,14 @@ class ReplayBuffer:
 
         """
         # ==================== YOUR CODE HERE (Part 1a) ====================
-        raise NotImplementedError("Implement ReplayBuffer.add")
+        self.observations[self.pos] = obs
+        self.next_observations[self.pos] = next_obs
+        self.actions[self.pos] = action
+        self.rewards[self.pos] = reward
+        self.dones[self.pos] = done
+
+        self.pos = (self.pos + 1) % self.capacity  # wrap around -> FIFO overwrite
+        self.size = min(self.size + 1, self.capacity)
         # ==================================================================
 
     def sample(self, batch_size: int) -> Batch:
@@ -135,7 +142,15 @@ class ReplayBuffer:
 
         """
         # ==================== YOUR CODE HERE (Part 1b) ====================
-        raise NotImplementedError("Implement ReplayBuffer.sample")
+        # only sample from slots that actually hold a transition (0..size-1)
+        idx = np.random.randint(0, self.size, size=batch_size)
+        return Batch(
+            observations=torch.as_tensor(self.observations[idx], device=self.device),
+            actions=torch.as_tensor(self.actions[idx], device=self.device),
+            next_observations=torch.as_tensor(self.next_observations[idx], device=self.device),
+            rewards=torch.as_tensor(self.rewards[idx], device=self.device),
+            dones=torch.as_tensor(self.dones[idx], device=self.device),
+        )
         # ==================================================================
 
 
@@ -144,7 +159,13 @@ def compute_td_targets(target_network, batch: Batch, gamma: float) -> torch.Tens
 
     """
     # ===================== YOUR CODE HERE (Part 2) =====================
-    raise NotImplementedError("Implement compute_td_targets")
+    # y = r + gamma * max_a' Q_target(s', a') * (1 - done)
+    # dones/rewards come in as (B, 1); flatten everything to (B,) so the
+    # result doesn't silently broadcast into (B, B) (see test_td_target_mixed_batch_shape_and_values).
+    with torch.no_grad():
+        target_max, _ = target_network(batch.next_observations).max(dim=1)
+    td_target = batch.rewards.flatten() + gamma * (1.0 - batch.dones.flatten()) * target_max
+    return td_target
     # ===================================================================
 
 
