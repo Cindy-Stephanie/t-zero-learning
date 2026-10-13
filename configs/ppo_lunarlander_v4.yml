@@ -1,0 +1,49 @@
+# PPO — LunarLander-v3, terceira iteração (v4), baseada nos diagnósticos reais do v3:
+#
+#   - charts/episodic_return_mean_last100 estabiliza em ~120-130 por volta de
+#     50-75% do treino e não sobe mais (não é falta de orçamento).
+#   - losses/explained_variance alto (~0.74-0.85): o crítico está estimando
+#     bem os retornos, não é esse o gargalo.
+#   - losses/entropy final ainda em ~0.95-1.01, contra um máximo teórico de
+#     log(4) ~= 1.386 (política uniforme sobre as 4 ações) -> a política
+#     ainda está bem longe de "comprometida" com uma ação, mesmo no platô.
+#
+# Única mudança em relação ao v3: ent_coef 0.01 -> 0.0 (sem bônus de entropia).
+# Hipótese: o bônus de entropia está impedindo a política de explorar menos e
+# convergir para ações mais determinísticas perto do ótimo, mesmo quando o
+# crítico já indica qual ação é melhor (advantage confiável). Tudo o mais
+# igual ao v3 para isolar o efeito dessa única mudança.
+
+algorithm: ppo
+env_id: LunarLander-v3
+seed: 1
+cuda: false
+
+total_timesteps: 2000000
+num_envs: 16
+
+track: true
+capture_video: true
+save_model: true
+checkpoint_every: 0
+
+network: DiscreteActorCritic
+network_kwargs:
+  activation: Tanh
+  hidden_layers_size: 64
+
+ppo:
+  learning_rate: 2.5e-4
+  anneal_lr: true
+  num_steps: 1024
+  gamma: 0.999
+  gae_lambda: 0.98
+  num_minibatches: 32
+  update_epochs: 10
+  norm_adv: true
+  clip_coef: 0.2
+  clip_vloss: true
+  ent_coef: 0.0
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  target_kl: null
