@@ -1,0 +1,57 @@
+# PPO — LunarLander-v3, tentativa de hiperparâmetros (Parte 4).
+#
+# Mudanças em relação a configs/ppo_lunarlander.yml (os defaults do CleanRL,
+# ajustados para CartPole):
+#
+#   gamma:            0.99  -> 0.999   (episódios do LunarLander duram ~200-1000
+#                                        passos e a recompensa de pouso só vem no
+#                                        fim; gamma mais alto propaga esse sinal
+#                                        para trás por mais passos)
+#   gae_lambda:        0.95 -> 0.98    (acompanha o gamma mais alto; reduz o viés
+#                                        do bootstrap em troca de mais variância)
+#   num_envs:            4  -> 8       (mais atores em paralelo = rollout mais
+#                                        diverso por atualização)
+#   num_steps:          128  -> 256    (rollout mais longo por ambiente antes de
+#                                        cada atualização)
+#   total_timesteps: 1000000 -> 2000000 (usa o orçamento máximo permitido)
+#
+# Esses valores vêm de configs conhecidos de PPO para LunarLander (ex.: o zoo do
+# SB3 usa gamma=0.999, gae_lambda=0.98, n_steps grande). NÃO são o motivo que vai
+# pro relatório — o motivo observado tem que vir dos gráficos reais (approx_kl,
+# clipfrac, entropy, explained_variance, episodic_return_mean_last100) depois que
+# você rodar. Se não resolver de primeira, use este run como ponto de partida
+# para a próxima iteração.
+
+algorithm: ppo
+env_id: LunarLander-v3
+seed: 1
+cuda: false
+
+total_timesteps: 2000000
+num_envs: 8
+
+track: true
+capture_video: true
+save_model: true
+checkpoint_every: 0
+
+network: DiscreteActorCritic
+network_kwargs:
+  activation: Tanh
+  hidden_layers_size: 64
+
+ppo:
+  learning_rate: 2.5e-4
+  anneal_lr: true
+  num_steps: 256
+  gamma: 0.999
+  gae_lambda: 0.98
+  num_minibatches: 4
+  update_epochs: 4
+  norm_adv: true
+  clip_coef: 0.2
+  clip_vloss: true
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  target_kl: null

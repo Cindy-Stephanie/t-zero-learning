@@ -1,0 +1,31 @@
+# A2C — LunarLander-v3, para a comparação PPO vs A2C (Parte 5).
+# Ponto de partida: configs/a2c_cartpole.yml, com env_id trocado e o MESMO
+# orçamento de passos usado no PPO (2 seeds, mesmo total_timesteps), para a
+# comparação ser justa. Ajuste se achar necessário e documente no relatório.
+
+algorithm: a2c
+env_id: LunarLander-v3
+seed: 1
+cuda: false
+
+total_timesteps: 2000000   # igual ao total_timesteps do PPO usado na comparação
+num_envs: 8                # igual ao PPO (configs/ppo_lunarlander_v2.yml)
+
+track: true
+capture_video: true
+save_model: true
+checkpoint_every: 0
+
+network: DiscreteActorCritic
+network_kwargs:
+  activation: Tanh
+  hidden_layers_size: 64
+
+a2c:
+  learning_rate: 7.0e-4
+  num_steps: 5
+  gamma: 0.99
+  vf_coef: 0.5
+  ent_coef: 0.01
+  max_grad_norm: 0.5
+  use_baseline: true
