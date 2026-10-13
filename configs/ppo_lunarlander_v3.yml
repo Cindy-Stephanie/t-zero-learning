@@ -1,0 +1,47 @@
+# PPO — LunarLander-v3, segunda iteração (candidato v3), a testar em paralelo
+# enquanto analisamos os diagnósticos do v2.
+#
+# Mudança principal em relação ao v2: muito mais passos de gradiente por
+# rollout. v2 tinha batch_size = num_envs(8) * num_steps(256) = 2048 dividido
+# em só 4 minibatches (512 cada) -> poucas atualizações por rollout coletado.
+# Aqui: num_envs=16, num_steps=1024 -> batch=16384, dividido em 32 minibatches
+# (512 cada) -> 32 updates por rollout em vez de 4, e mais dados por update
+# (mais atores paralelos). update_epochs sobe de 4 para 10 (mais reuso de cada
+# rollout, viável porque o clipping evita que isso desvie demais a política).
+#
+# Isso é uma hipótese a testar, não uma conclusão — ajuste depois de ver os
+# diagnósticos reais dos runs do v1/v2.
+
+algorithm: ppo
+env_id: LunarLander-v3
+seed: 1
+cuda: false
+
+total_timesteps: 2000000
+num_envs: 16
+
+track: true
+capture_video: true
+save_model: true
+checkpoint_every: 0
+
+network: DiscreteActorCritic
+network_kwargs:
+  activation: Tanh
+  hidden_layers_size: 64
+
+ppo:
+  learning_rate: 2.5e-4
+  anneal_lr: true
+  num_steps: 1024
+  gamma: 0.999
+  gae_lambda: 0.98
+  num_minibatches: 32
+  update_epochs: 10
+  norm_adv: true
+  clip_coef: 0.2
+  clip_vloss: true
+  ent_coef: 0.01
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  target_kl: null
