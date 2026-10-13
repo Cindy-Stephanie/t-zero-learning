@@ -145,7 +145,21 @@ def compute_gae(
         advantages + values`` (the critic's regression target).
     """
     # ===================== YOUR CODE HERE (Part 1) =====================
-    raise NotImplementedError("Implement compute_gae")
+    T = rewards.shape[0]
+    advantages = torch.zeros_like(rewards)
+    lastgaelam = torch.zeros_like(next_value)
+    for t in reversed(range(T)):
+        if t == T - 1:
+            nonterminal = 1.0 - next_done
+            next_values = next_value
+        else:
+            nonterminal = 1.0 - dones[t + 1]
+            next_values = values[t + 1]
+        delta = rewards[t] + gamma * nonterminal * next_values - values[t]
+        lastgaelam = delta + gamma * gae_lambda * nonterminal * lastgaelam
+        advantages[t] = lastgaelam
+    returns = advantages + values
+    return advantages, returns
     # ===================================================================
 
 
@@ -162,7 +176,13 @@ def compute_clipped_policy_loss(
     objective.
     """
     # ===================== YOUR CODE HERE (Part 2) =====================
-    raise NotImplementedError("Implement compute_clipped_policy_loss")
+    oldlogprob = oldlogprob.detach()
+    advantages = advantages.detach()
+    ratio = torch.exp(newlogprob - oldlogprob)
+    unclipped = ratio * advantages
+    clipped = torch.clamp(ratio, 1 - clip_coef, 1 + clip_coef) * advantages
+    objective = torch.min(unclipped, clipped)
+    return -objective.mean()
     # ===================================================================
 
 
@@ -177,7 +197,12 @@ def approx_kl_and_clipfrac(
     ``clipfrac`` is the fraction of samples with ``|ratio - 1| > clip_coef``.
     """
     # ===================== YOUR CODE HERE (Part 3) =====================
-    raise NotImplementedError("Implement approx_kl_and_clipfrac")
+    with torch.no_grad():
+        logratio = newlogprob - oldlogprob
+        ratio = torch.exp(logratio)
+        approx_kl = ((ratio - 1) - logratio).mean()
+        clipfrac = ((ratio - 1.0).abs() > clip_coef).float().mean()
+    return approx_kl, clipfrac
     # ===================================================================
 
 
