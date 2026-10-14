@@ -1,0 +1,48 @@
+# PPO — LunarLander-v3, quarta iteração (v5), baseada nos resultados reais do v4:
+#
+#   v4 (ent_coef=0.0): seed=1 -> eval 113.56±43.74 ; seed=2 -> eval 211.23±79.44.
+#   Só uma seed passou de 200, e os dois resultados são bem distantes um do
+#   outro, com desvios grandes (43-79) -- maiores que no v3 (18-34). Zerar o
+#   bônus de entropia tirou o platô baixo do v3, mas trocou por instabilidade
+#   entre seeds: sem nenhuma pressão de exploração, a política parece colapsar
+#   cedo numa de duas bacias de atração diferentes (uma boa, outra mediana),
+#   dependendo da sorte da inicialização/trajetória.
+#
+# Único ajuste em relação ao v4: ent_coef 0.0 -> 0.001 (não 0.01 do v3, nem 0.0
+# do v4 -- um meio-termo pequeno, só para manter alguma exploração residual e
+# reduzir a dependência da seed, sem voltar a travar a política como no v3).
+# Tudo o mais igual ao v4/v3.
+
+algorithm: ppo
+env_id: LunarLander-v3
+seed: 1
+cuda: false
+
+total_timesteps: 2000000
+num_envs: 16
+
+track: true
+capture_video: true
+save_model: true
+checkpoint_every: 0
+
+network: DiscreteActorCritic
+network_kwargs:
+  activation: Tanh
+  hidden_layers_size: 64
+
+ppo:
+  learning_rate: 2.5e-4
+  anneal_lr: true
+  num_steps: 1024
+  gamma: 0.999
+  gae_lambda: 0.98
+  num_minibatches: 32
+  update_epochs: 10
+  norm_adv: true
+  clip_coef: 0.2
+  clip_vloss: true
+  ent_coef: 0.001
+  vf_coef: 0.5
+  max_grad_norm: 0.5
+  target_kl: null
