@@ -143,7 +143,17 @@ def squashed_gaussian_sample(
         ``tanh(mean) * action_scale + action_bias`` (B, A).
     """
     # ===================== YOUR CODE HERE (Part 1) =====================
-    raise NotImplementedError("Implement squashed_gaussian_sample")
+    std = log_std.exp()
+    dist = Normal(mean, std)
+    u = dist.rsample()  # reparameterization trick: mean + std * eps
+    y = torch.tanh(u)
+    action = y * action_scale + action_bias
+    mean_action = torch.tanh(mean) * action_scale + action_bias
+
+    log_prob = dist.log_prob(u) - torch.log(action_scale * (1 - y.pow(2)) + 1e-6)
+    log_prob = log_prob.sum(1, keepdim=True)
+
+    return action, log_prob, mean_action
     # ===================================================================
 
 
@@ -168,7 +178,9 @@ def compute_soft_q_target(
     Returns a (B,) tensor.
     """
     # ===================== YOUR CODE HERE (Part 2) =====================
-    raise NotImplementedError("Implement compute_soft_q_target")
+    min_next_q = torch.min(next_q1, next_q2)
+    soft_value = min_next_q - alpha * next_log_pi
+    return rewards + gamma * (1 - dones) * soft_value
     # ===================================================================
 
 
