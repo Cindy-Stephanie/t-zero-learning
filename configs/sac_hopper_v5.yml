@@ -1,0 +1,39 @@
+# SAC — Hopper-v5, candidato v5 (Parte 3).
+#
+# Única mudança em relação a configs/sac_hopper.yml: batch_size 256 -> 512.
+# Hipótese: lotes maiores dão uma estimativa de gradiente menos ruidosa por
+# update dos críticos (importante com só 100k passos no buffer, bem menor
+# que o 1M de capacidade) -- testar se isso ajuda mais que simplesmente
+# fazer mais updates (v2/v3) ou começar a aprender mais cedo (v4).
+
+algorithm: sac
+env_id: Hopper-v5
+seed: 1
+cuda: false
+total_timesteps: 100000
+num_envs: 1
+
+track: true
+capture_video: true
+save_model: true
+checkpoint_every: 25000
+
+network: SACAgent
+network_kwargs:
+  activation: ReLU
+  hidden_layers_size: 256
+
+sac:
+  buffer_size: 1000000
+  gamma: 0.99
+  tau: 0.005
+  batch_size: 512
+  learning_starts: 5000
+  policy_lr: 3.0e-4
+  q_lr: 1.0e-3
+  policy_frequency: 2
+  target_network_frequency: 1
+  alpha: 0.2
+  autotune: true
+  updates_per_step: 1
+  clipped_double_q: true

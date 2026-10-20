@@ -1,0 +1,39 @@
+# SAC — Hopper-v5, candidato v4 (Parte 3).
+#
+# Única mudança em relação a configs/sac_hopper.yml: learning_starts
+# 5000 -> 1000. Hipótese: com orçamento curto (100k passos), 5000 passos de
+# ação aleatória (5% do orçamento) sem nenhum update é caro -- adiar menos a
+# fase de aprendizado deixa mais passos efetivos de treino dentro do mesmo
+# orçamento total, mesmo com um buffer inicial um pouco menos diverso.
+
+algorithm: sac
+env_id: Hopper-v5
+seed: 1
+cuda: false
+total_timesteps: 100000
+num_envs: 1
+
+track: true
+capture_video: true
+save_model: true
+checkpoint_every: 25000
+
+network: SACAgent
+network_kwargs:
+  activation: ReLU
+  hidden_layers_size: 256
+
+sac:
+  buffer_size: 1000000
+  gamma: 0.99
+  tau: 0.005
+  batch_size: 256
+  learning_starts: 1000
+  policy_lr: 3.0e-4
+  q_lr: 1.0e-3
+  policy_frequency: 2
+  target_network_frequency: 1
+  alpha: 0.2
+  autotune: true
+  updates_per_step: 1
+  clipped_double_q: true
